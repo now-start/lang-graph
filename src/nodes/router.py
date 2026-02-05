@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from src.states import ChatbotState
+from src.states.chatbot import ChatbotState
 
 
 def should_continue(state: ChatbotState) -> Literal["tools", "end"]:

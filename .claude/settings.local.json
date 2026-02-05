@@ -24,7 +24,15 @@
       "Bash(xargs kill -9)",
       "Bash(uv pip install -e .)",
       "Bash(chmod +x /Users/moon/IdeaProjects/lang-graph/scripts/download_model.py)",
-      "Bash(langgraph dev)"
+      "Bash(langgraph dev)",
+      "Bash(pkill -9 -f \"langgraph dev\")",
+      "Bash(ps -p 71897 -o pid,command)",
+      "Bash(kill -9 71897)",
+      "Bash(chmod +x /Users/moon/IdeaProjects/lang-graph/scripts/embed_documents.py)",
+      "Bash(python -c \"from src.graph import graph; print\\(''✓ Import successful''\\)\")",
+      "Bash(python -c \"\nfrom src.states.chatbot import ChatbotState\nfrom src.tools.weather import get_weather\nfrom src.tools.calculator import calculate\nfrom src.tools.retriever import search_documents\nfrom src.utils.llm import get_local_llm\nfrom src.nodes.model import call_model\nfrom src.nodes.tools_executor import call_tools\nfrom src.nodes.router import should_continue\nfrom src.nodes.input_processor import process_input\nfrom src.nodes.retriever import retrieve_documents\nfrom src.prompts.agent import get_rag_system_prompt, get_base_system_prompt\nprint\\(''✅ All imports working correctly!''\\)\n\")",
+      "Bash(python scripts/embed_documents.py /Users/moon/IdeaProjects/lang-graph/data --pattern \"*.docx\")",
+      "Bash(ollama pull qwen3-embedding:8b)"
     ]
   }
 }
