@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv sync)",
+      "Bash(uv run python src/graph.py)",
+      "Bash(ollama list)",
+      "Bash(tree -I '__pycache__|*.pyc|.venv|uv.lock' -L 3)",
+      "Bash(uv run python examples/run_simple.py)",
+      "Bash(test -d src/agents)",
+      "Bash(find src -name \"*.py\" -type f -exec grep -l \"WorkflowState\\\\|simple_workflow\" {} ;)",
+      "Bash(ls -la src/*.py)",
+      "Bash(ls -la *.md)",
+      "Bash(uv pip list)",
+      "Bash(uv pip install --upgrade \"langgraph-cli[inmem]\")",
+      "Bash(uv pip install --upgrade langgraph-api langgraph-runtime-inmem)",
+      "Bash(uv pip uninstall langgraph-runtime-inmem langgraph-api langgraph-cli)",
+      "Bash(uv pip install \"langgraph-cli[inmem]>=0.1.0\")",
+      "Bash(uv pip install --upgrade --upgrade-package langgraph-api --upgrade-package langgraph-runtime-inmem langgraph-cli[inmem])",
+      "Bash(pip index versions langgraph-api)",
+      "Bash(pip index versions langgraph-runtime-inmem)",
+      "Bash(uv pip install langgraph-runtime-inmem==0.22.1)",
+      "Bash(timeout 5 langgraph dev)",
+      "Bash(lsof -ti:2024)",
+      "Bash(xargs kill -9)",
+      "Bash(uv pip install -e .)",
+      "Bash(chmod +x /Users/moon/IdeaProjects/lang-graph/scripts/download_model.py)",
+      "Bash(langgraph dev)"
+    ]
+  }
+}
