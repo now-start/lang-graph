@@ -9,8 +9,12 @@ load_dotenv()
 class Config:
     """Application configuration."""
 
-    # HuggingFace
-    HUGGINGFACE_MODEL = os.getenv(
-        "HUGGINGFACE_MODEL",
-        "Qwen/Qwen2.5-1.5B-Instruct"
+    # Ollama
+    OLLAMA_MODEL = os.getenv(
+        "OLLAMA_MODEL",
+        "qwen3-vl:8b"
+    )
+    OLLAMA_BASE_URL = os.getenv(
+        "OLLAMA_BASE_URL",
+        "http://localhost:11434"
     )

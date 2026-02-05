@@ -1,49 +1,35 @@
 """LLM initialization utilities."""
 
-import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
-from langchain_huggingface import HuggingFacePipeline
-
+from langchain_ollama import ChatOllama
 from src.config.config import Config
 
 
-def get_local_llm() -> HuggingFacePipeline:
-    """Initialize local HuggingFace model.
+# Global variable to cache the model
+_chat_model = None
+
+
+def get_local_llm() -> ChatOllama:
+    """Initialize local Ollama model.
 
     Returns:
-        HuggingFacePipeline: Initialized language model
+        ChatOllama: Initialized chat language model
     """
-    model_id = Config.HUGGINGFACE_MODEL
+    global _chat_model
 
-    print(f"🔄 Loading model: {model_id}")
-    print("   This may take a few minutes on first run...")
+    if _chat_model is not None:
+        print("reusing cached model...")
+        return _chat_model
 
-    # Check for GPU availability
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"   Using device: {device}")
+    model_id = Config.OLLAMA_MODEL
+    base_url = Config.OLLAMA_BASE_URL
 
-    # Load tokenizer and model
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
-    model = AutoModelForCausalLM.from_pretrained(
-        model_id,
-        torch_dtype=torch.float16 if device == "cuda" else torch.float32,
-        device_map="auto" if device == "cuda" else None,
-        low_cpu_mem_usage=True
+    print(f"🔄 Connecting to Ollama: {model_id} at {base_url}")
+
+    _chat_model = ChatOllama(
+        model=model_id,
+        base_url=base_url,
+        temperature=0.7,
     )
+    print("✅ Model connected successfully!\n")
 
-    # Create pipeline
-    pipe = pipeline(
-        "text-generation",
-        model=model,
-        tokenizer=tokenizer,
-        max_new_tokens=512,
-        temperature=0.1,
-        top_p=0.95,
-        repetition_penalty=1.15
-    )
-
-    # Wrap with LangChain
-    llm = HuggingFacePipeline(pipeline=pipe)
-    print("✅ Model loaded successfully!\n")
-
-    return llm
+    return _chat_model

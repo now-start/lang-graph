@@ -8,16 +8,18 @@ This module defines the chatbot graph structure:
 Node implementations are in src/nodes/chatbot/
 """
 
+import asyncio
 from functools import partial
 from langgraph.graph import StateGraph, END
 
+from langchain_ollama import ChatOllama
 from src.states import ChatbotState
 from src.tools import get_weather, calculate
 from src.utils import get_local_llm
 from src.nodes import call_model, call_tools, should_continue
 
 
-def create_chatbot_graph():
+async def create_chatbot_graph():
     """Create and configure the chatbot graph.
 
     Graph structure:
@@ -30,7 +32,9 @@ def create_chatbot_graph():
     """
     # Initialize LLM with tools
     tools = [get_weather, calculate]
-    chat_model = get_local_llm()
+    # Use to_thread to avoid blocking event loop during heavy model loading
+    chat_model: ChatOllama = await asyncio.to_thread(get_local_llm)
+    # Ensure tool binding is correct for Qwen
     chat_model_with_tools = chat_model.bind_tools(tools)
 
     # Create graph
@@ -55,7 +59,13 @@ def create_chatbot_graph():
     return workflow.compile()
 
 
-# Export function for LangGraph Dev (lazy initialization)
-def graph():
+# Global variable to cache the compiled graph
+_compiled_graph = None
+
+
+async def graph():
     """Lazy graph initialization for LangGraph Dev."""
-    return create_chatbot_graph()
+    global _compiled_graph
+    if _compiled_graph is None:
+        _compiled_graph = await create_chatbot_graph()
+    return _compiled_graph

@@ -26,7 +26,7 @@ langgraph dev
 
 ### 비동기 처리
 
-이 프로젝트는 HuggingFace Transformers의 블로킹 호출을 `asyncio.to_thread()`로 래핑하여 비동기 환경에서 안전하게 실행됩니다.
+이 프로젝트는 Ollama를 사용하여 로컬에서 LLM을 실행하며, LangGraph를 통해 워크플로우를 제어합니다.
 
 **참고:** 만약 블로킹 경고가 나타나면:
 - 개발 환경: `langgraph dev --allow-blocking`
@@ -65,7 +65,8 @@ Qwen 2.5 모델 기반 대화형 챗봇:
 `.env` 파일:
 
 ```bash
-HUGGINGFACE_MODEL=Qwen/Qwen2.5-1.5B-Instruct
+OLLAMA_MODEL=qwen3-vl:8b
+OLLAMA_BASE_URL=http://localhost:11434
 ```
 
 다른 모델로 변경 가능:
