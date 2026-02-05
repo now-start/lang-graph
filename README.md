@@ -1,107 +1,168 @@
-# LangGraph Sample Project
+# LangGraph RAG Chatbot
 
-LangGraph 예제 프로젝트 - Qwen 로컬 모델과 도구 호출
+Elasticsearch + Ollama 기반 RAG(Retrieval-Augmented Generation) 챗봇
 
 ## 특징
 
-- 🤖 Qwen/Qwen2.5-1.5B-Instruct (가볍고 빠른 1.5B 모델)
-- 🔧 도구 호출 (날씨 조회, 계산기)
-- 🌐 LangGraph Dev 서버 (웹 UI)
-- 📊 깔끔한 모듈 구조
+- 🤖 **로컬 LLM**: Ollama 기반 (Qwen3:4b)
+- 🔍 **벡터 검색**: Elasticsearch + 벡터 임베딩
+- 📚 **RAG 지원**: 문서 기반 컨텍스트 검색
+- 🐳 **자동 시작**: Docker Compose 자동 실행
+- 🔧 **도구 호출**: 날씨 조회, 계산기, 문서 검색
+- 📊 **모니터링**: 진행 상황 실시간 표시
 
 ## 빠른 시작
 
+### 1. 의존성 설치
+
 ```bash
-# 의존성 설치
+# Python 패키지 설치
 uv sync
 
 # 프로젝트 설치 (절대 임포트 지원)
 uv pip install -e .
+```
 
-# LangGraph Dev 서버 실행
+### 2. Ollama 모델 다운로드
+
+```bash
+# LLM 모델
+ollama pull qwen3:4b
+
+# 임베딩 모델
+ollama pull qwen3-embedding:0.6b
+```
+
+### 3. 문서 임베딩
+
+```bash
+# data/ 폴더의 문서를 Elasticsearch에 임베딩
+python scripts/embed_documents.py data --pattern "*.docx"
+
+# 또는 Quick Mode (기본 설정)
+python scripts/embed_documents.py
+```
+
+### 4. LangGraph Dev 서버 실행
+
+```bash
+# Elasticsearch가 자동으로 시작됩니다
 langgraph dev
 
 # 브라우저에서 자동으로 열림 (http://127.0.0.1:2024)
 ```
 
-### 비동기 처리
+## 환경 설정
 
-이 프로젝트는 Ollama를 사용하여 로컬에서 LLM을 실행하며, LangGraph를 통해 워크플로우를 제어합니다.
+`.env` 파일 생성:
 
-**참고:** 만약 블로킹 경고가 나타나면:
-- 개발 환경: `langgraph dev --allow-blocking`
-- 프로덕션: 환경변수 `BG_JOB_ISOLATED_LOOPS=true` 설정
+```bash
+# LLM 모델
+OLLAMA_MODEL=qwen3:4b
+OLLAMA_BASE_URL=http://localhost:11434
+
+# 임베딩 모델
+OLLAMA_EMBEDDING_MODEL=qwen3-embedding:0.6b
+
+# Elasticsearch
+ELASTICSEARCH_URL=http://localhost:9200
+ELASTICSEARCH_INDEX=documents
+```
 
 ## 프로젝트 구조
 
 ```
-src/
-├── chatbot.py           # 그래프 설정
-├── config/              # 설정
-│   └── config.py
-├── states/              # 상태 정의
-│   └── chatbot.py
-├── nodes/               # 노드 구현
-│   ├── model.py        # LLM 호출
-│   ├── tools_executor.py # 도구 실행
-│   └── router.py       # 라우팅
-├── tools/              # 도구 정의
-│   ├── weather.py
-│   └── calculator.py
-└── utils/              # 유틸리티
-    └── llm.py
+.
+├── src/
+│   ├── graph.py              # 그래프 정의 (Hybrid RAG)
+│   ├── config/
+│   │   └── config.py         # 환경 설정
+│   ├── states/
+│   │   └── chatbot.py        # 상태 정의
+│   ├── nodes/                # 노드 구현
+│   │   ├── model.py          # LLM 호출
+│   │   ├── tools_executor.py # 도구 실행
+│   │   ├── router.py         # 라우팅
+│   │   ├── input_processor.py
+│   │   └── retriever.py      # 문서 검색
+│   ├── tools/                # 도구 정의
+│   │   ├── weather.py
+│   │   ├── calculator.py
+│   │   └── retriever.py      # Elasticsearch 검색
+│   └── utils/
+│       ├── llm.py            # LLM 초기화
+│       └── docker.py         # Docker 관리
+├── scripts/
+│   └── embed_documents.py    # 문서 임베딩 스크립트
+├── data/                     # 문서 파일
+├── docker-compose.yml        # Elasticsearch + Kibana
+└── langgraph.json           # LangGraph 설정
 ```
 
-## Chatbot 그래프
+## RAG 워크플로우
 
-Qwen 2.5 모델 기반 대화형 챗봇:
-- 자연어 대화 처리
-- 도구 호출: 날씨 조회, 계산기
-- 대화 히스토리 관리
-- 컨텍스트 유지
+### Hybrid RAG 패턴
 
-## 설정
+```
+사용자 입력
+    ↓
+입력 처리 (process_input)
+    ↓
+문서 검색 (retrieve) ← 벡터 검색
+    ↓
+LLM 응답 (agent) ← 검색된 문서 + 사용자 질문
+    ↓
+도구 호출 필요? ─→ Yes ─→ 도구 실행 (tools) ─┐
+    ↓ No                                       │
+    ↓ ←─────────────────────────────────────────┘
+최종 응답
+```
 
-`.env` 파일:
+## 문서 임베딩
+
+### 지원 파일 형식
+
+- **DOCX**: Word 문서
+- **PDF**: PDF 파일
+- **Markdown**: .md, .markdown
+- **텍스트**: .txt, .text
+- **코드**: .py, .js, .ts, .java, .go
+
+### 임베딩 옵션
 
 ```bash
-OLLAMA_MODEL=qwen3-vl:8b
-OLLAMA_BASE_URL=http://localhost:11434
+# 기본 사용
+python scripts/embed_documents.py <directory>
+
+# 재귀적 검색
+python scripts/embed_documents.py <directory> --recursive
+
+# 특정 패턴
+python scripts/embed_documents.py <directory> --pattern "*.md"
+
+# 청크 크기 조정
+python scripts/embed_documents.py <directory> \
+  --chunk-size 500 \
+  --chunk-overlap 100
+
+# 배치 크기 조정 (메모리 부족 시)
+python scripts/embed_documents.py <directory> --batch-size 10
 ```
 
-다른 모델로 변경 가능:
-- `Qwen/Qwen2.5-3B-Instruct` - 3B, 더 높은 품질
-- `google/gemma-2-2b-it` - 2B, Google 모델
-- `LGAI-EXAONE/EXAONE-3.5-2.4B-Instruct` - 2.4B, 한국어 특화
+## Docker Services
 
-## 아키텍처
+### Elasticsearch + Kibana
 
-### 관심사의 분리
+```bash
+# 수동 시작
+docker-compose up -d
 
-- **states/**: 데이터 구조 (TypedDict)
-- **nodes/**: 비즈니스 로직 (순수 함수)
-- **chatbot.py**: 그래프 구조
-- **tools/**: 재사용 가능한 도구
+# 로그 확인
+docker-compose logs -f elasticsearch
 
-이 구조는:
-- 그래프 흐름을 한눈에 파악 가능
-- 노드와 도구 재사용 용이
-- 확장성과 유지보수성 향상
+# 중지
+docker-compose down
 
-## 확장하기
-
-### 새 도구 추가
-
-1. `src/tools/`에 파일 생성
-2. `@tool` 데코레이터 사용
-3. `tools/__init__.py`에서 export
-4. `nodes/tools_executor.py`에서 등록
-
-### 새 노드 추가
-
-1. `src/nodes/`에 파일 생성
-2. 순수 함수로 구현: `(state) -> state`
-3. `nodes/__init__.py`에서 export
-4. `chatbot.py`에서 연결
-
-상세 문서: [PROJECT_STRUCTURE.md](./PROJECT_STRUCTURE.md)
+# 데이터 초기화
+docker-compose down -v
+```
