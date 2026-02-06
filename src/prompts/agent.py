@@ -38,17 +38,3 @@ Instructions:
 - Always provide accurate, clear, and helpful responses"""
 
 
-def get_retrieval_query_prompt(user_message: str) -> str:
-    """Get prompt for query reformulation (optional enhancement).
-
-    Args:
-        user_message: User's original message
-
-    Returns:
-        Reformulated query for better retrieval
-    """
-    return f"""Reformulate the following user question into a clear search query:
-
-User question: {user_message}
-
-Search query:"""

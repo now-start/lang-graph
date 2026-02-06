@@ -3,27 +3,8 @@
 from langchain_core.tools import tool
 from langchain_elasticsearch import ElasticsearchStore
 from langchain_ollama import OllamaEmbeddings
-from elasticsearch import Elasticsearch
 
 from src.config.config import Config
-
-
-def get_elasticsearch_client():
-    """Create Elasticsearch client with authentication."""
-    auth_params = {}
-
-    if Config.ELASTICSEARCH_API_KEY:
-        auth_params["api_key"] = Config.ELASTICSEARCH_API_KEY
-    elif Config.ELASTICSEARCH_USER and Config.ELASTICSEARCH_PASSWORD:
-        auth_params["basic_auth"] = (
-            Config.ELASTICSEARCH_USER,
-            Config.ELASTICSEARCH_PASSWORD
-        )
-
-    return Elasticsearch(
-        Config.ELASTICSEARCH_URL,
-        **auth_params
-    )
 
 
 def get_retriever():

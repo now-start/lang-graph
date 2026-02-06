@@ -1,8 +1,11 @@
 """Docker container management utilities."""
 
+import logging
 import subprocess
 import time
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def is_docker_running() -> bool:
@@ -15,7 +18,7 @@ def is_docker_running() -> bool:
         result = subprocess.run(
             ["docker", "info"],
             capture_output=True,
-            timeout=5
+            timeout=5,
         )
         return result.returncode == 0
     except (subprocess.TimeoutExpired, FileNotFoundError):
@@ -33,7 +36,7 @@ def is_elasticsearch_running() -> bool:
             ["docker", "ps", "--filter", "name=langgraph-elasticsearch", "--format", "{{.Names}}"],
             capture_output=True,
             text=True,
-            timeout=5
+            timeout=5,
         )
         return "langgraph-elasticsearch" in result.stdout
     except (subprocess.TimeoutExpired, FileNotFoundError):
@@ -50,42 +53,42 @@ def start_elasticsearch() -> bool:
     compose_file = project_root / "docker-compose.yml"
 
     if not compose_file.exists():
-        print("❌ docker-compose.yml not found")
+        logger.error("docker-compose.yml not found")
         return False
 
     try:
-        print("🐳 Starting Elasticsearch containers...")
+        logger.info("Starting Elasticsearch containers...")
         result = subprocess.run(
             ["docker-compose", "up", "-d"],
             cwd=project_root,
             capture_output=True,
             text=True,
-            timeout=60
+            timeout=60,
         )
 
         if result.returncode != 0:
-            print(f"❌ Failed to start containers: {result.stderr}")
+            logger.error("Failed to start containers: %s", result.stderr)
             return False
 
-        print("⏳ Waiting for Elasticsearch to be healthy...")
+        logger.info("Waiting for Elasticsearch to be healthy...")
         max_retries = 30
         for i in range(max_retries):
             if is_elasticsearch_healthy():
-                print("✅ Elasticsearch is ready!")
-                print("📊 Kibana available at: http://localhost:5601")
+                logger.info("Elasticsearch is ready.")
+                logger.info("Kibana available at: http://localhost:5601")
                 return True
             time.sleep(2)
             if i % 5 == 0:
-                print(f"   Still waiting... ({i}/{max_retries})")
+                logger.info("Still waiting... (%s/%s)", i, max_retries)
 
-        print("⚠️  Elasticsearch started but health check timed out")
+        logger.warning("Elasticsearch started but health check timed out")
         return True
 
     except subprocess.TimeoutExpired:
-        print("❌ Docker compose command timed out")
+        logger.error("Docker compose command timed out")
         return False
     except FileNotFoundError:
-        print("❌ docker-compose command not found. Please install Docker Compose.")
+        logger.error("docker-compose command not found. Please install Docker Compose.")
         return False
 
 
@@ -97,6 +100,7 @@ def is_elasticsearch_healthy() -> bool:
     """
     try:
         import requests
+
         response = requests.get("http://localhost:9200/_cluster/health", timeout=2)
         return response.status_code == 200
     except Exception:
@@ -110,12 +114,12 @@ def ensure_elasticsearch_running() -> bool:
         True if Elasticsearch is running or successfully started
     """
     if not is_docker_running():
-        print("⚠️  Docker is not running. Please start Docker first.")
+        logger.warning("Docker is not running. Please start Docker first.")
         return False
 
     if is_elasticsearch_running():
-        print("✅ Elasticsearch container is already running")
+        logger.info("Elasticsearch container is already running")
         return True
 
-    print("🚀 Elasticsearch not running, starting automatically...")
+    logger.info("Elasticsearch not running, starting automatically...")
     return start_elasticsearch()

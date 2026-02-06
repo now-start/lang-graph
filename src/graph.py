@@ -5,14 +5,11 @@ This module defines the chatbot graph structure:
 - Conditional edges
 - State schema
 
-Node implementations are in src/nodes/chatbot/
 """
 
 import asyncio
 from functools import partial
 from langgraph.graph import StateGraph, END
-from langchain_core.messages import HumanMessage
-
 from langchain_ollama import ChatOllama
 from src.states.chatbot import ChatbotState
 from src.tools.weather import get_weather
@@ -24,7 +21,6 @@ from src.nodes.tools_executor import call_tools
 from src.nodes.router import should_continue
 from src.nodes.input_processor import process_input
 from src.nodes.retriever import retrieve_documents
-from src.utils.docker import ensure_elasticsearch_running
 
 
 async def create_chatbot_graph():

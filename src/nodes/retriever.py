@@ -1,7 +1,11 @@
 """Document retrieval node for RAG."""
 
+import logging
+
 from src.states.chatbot import ChatbotState
 from src.tools.retriever import get_retriever
+
+logger = logging.getLogger(__name__)
 
 
 def retrieve_documents(state: ChatbotState) -> dict:
@@ -24,7 +28,7 @@ def retrieve_documents(state: ChatbotState) -> dict:
         if hasattr(msg, "type") and msg.type == "human":
             query = msg.content
             break
-        elif isinstance(msg, dict) and msg.get("role") == "user":
+        if isinstance(msg, dict) and msg.get("role") == "user":
             query = msg.get("content", "")
             break
 
@@ -39,11 +43,11 @@ def retrieve_documents(state: ChatbotState) -> dict:
         if not docs:
             return {
                 "retrieved_documents": "",
-                "query": query
+                "query": query,
             }
 
         # Format documents as context
-        context_parts = ["📚 Retrieved Documents:\n"]
+        context_parts = ["Retrieved Documents:\n"]
         for i, doc in enumerate(docs[:5], 1):  # Limit to top 5
             content = doc.page_content[:500]  # Limit length
             context_parts.append(f"{i}. {content}\n")
@@ -52,12 +56,12 @@ def retrieve_documents(state: ChatbotState) -> dict:
 
         return {
             "retrieved_documents": retrieved_context,
-            "query": query
+            "query": query,
         }
 
     except Exception as e:
-        print(f"⚠️  Retrieval error: {e}")
+        logger.exception("Retrieval error: %s", e)
         return {
-            "retrieved_documents": f"⚠️  Retrieval failed: {str(e)}",
-            "query": query
+            "retrieved_documents": f"Retrieval failed: {str(e)}",
+            "query": query,
         }

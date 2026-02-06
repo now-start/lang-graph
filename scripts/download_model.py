@@ -1,31 +1,31 @@
-"""Ollama 모델 풀링 스크립트.
+"""Ollama model download script."""
 
-Ollama가 실행 중이어야 합니다.
-"""
+from __future__ import annotations
 
+import logging
+import subprocess
 import sys
 from pathlib import Path
 
-# Add src to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-import subprocess
 from src.config.config import Config
+logger = logging.getLogger(__name__)
 
 
-def pull_model():
-    """Ollama 모델 다운로드."""
+def pull_model() -> None:
+    """Download the configured Ollama model."""
     model_id = Config.OLLAMA_MODEL
-    print(f"🔄 Pulling Ollama model: {model_id}")
-    
+    logger.info("Pulling Ollama model: %s", model_id)
+
     try:
         subprocess.run(["ollama", "pull", model_id], check=True)
-        print(f"✅ Model {model_id} pulled successfully!")
+        logger.info("Model %s pulled successfully.", model_id)
     except subprocess.CalledProcessError as e:
-        print(f"❌ Error pulling model: {e}")
+        logger.error("Error pulling model: %s", e)
     except FileNotFoundError:
-        print("❌ 'ollama' command not found. Please install Ollama first.")
+        logger.error("'ollama' command not found. Please install Ollama first.")
 
 
 if __name__ == "__main__":
